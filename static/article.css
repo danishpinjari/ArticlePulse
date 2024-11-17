@@ -27,7 +27,7 @@ body {
 
 .navbar-logo {
     color: #ffffff;
-    font-size: 24px;
+    font-size: 30px;
     text-decoration: none;
     font-weight: 600;
 }
@@ -50,6 +50,43 @@ body {
 
 .navbar-links li a:hover {
     background-color: #333; /* Lighter hover */
+}
+
+.navbar-links li a.active {
+    background-color: #3498db; /* Active Link Background */
+}
+
+/* Category Dropdown */
+.category-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.category-form label {
+    font-size: 16px;
+    color: #e0e0e0;
+    margin-right: 10px;
+}
+
+.category-form select {
+    padding: 10px;
+    font-size: 16px;
+    width: 250px;
+    border: 2px solid #333;
+    background-color: #1f1f1f;
+    color: #e0e0e0;
+    border-radius: 25px;
+    transition: border-color 0.3s ease;
+}
+
+.category-form select:focus {
+    border-color: #3498db; /* Focused Input Border */
+}
+
+.category-form select option {
+    background-color: #1f1f1f;
+    color: #e0e0e0;
 }
 
 /* Search Form */
@@ -206,6 +243,29 @@ footer {
         justify-content: center;
     }
 
+    .category-form {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .category-form select {
+        width: 100%;
+    }
+
+    .category-form button {
+        width: 100%;
+    }
+
+    .category-form label {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .category-form label i {
+        margin-right: 0;
+    }
+
     .search-form {
         width: 100%;
         justify-content: center;
@@ -231,7 +291,7 @@ footer {
 
 @media screen and (max-width: 768px) {
     .navbar-logo {
-        font-size: 22px;
+        font-size: 35px;
     }
 
     .navbar-links {
@@ -240,6 +300,34 @@ footer {
         align-items: flex-start;
         width: 100%;
         text-align: center;
+    }
+
+    .category-form {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .category-form select {
+        width: 100%;
+    }   
+
+    .category-form button {
+        width: 100%;
+    }
+
+    .category-form label {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .category-form label i {
+        margin-right: 0;
+    }
+
+    .search-form {
+        width: 100%;
+        justify-content: center;
     }
 
     .search-form input {
@@ -261,7 +349,7 @@ footer {
 
 @media screen and (max-width: 480px) {
     .navbar-logo {
-        font-size: 20px;
+        font-size: 35px;
     }
 
     .navbar-links {
