@@ -54,6 +54,13 @@
                     <h3><a href="{{ article.url }}" target="_blank"><i class="fas fa-link"></i> {{ article.title }}</a></h3>
                     <p>{{ article.description }}</p>
                     <a href="{{ article.url }}" target="_blank" class="read-more"><i class="fas fa-book-open"></i> Read more</a>
+                    <!-- Sentiment Analysis -->
+                    {% if sentiment_data %}
+                    <div class="sentiment">
+                        <p><strong>Sentiment: </strong> {{ sentiment_data[loop.index0].sentiment }}</p>
+                        <p><strong>Score: </strong> {{ sentiment_data[loop.index0].score }}</p>
+                    </div>
+                    {% endif %}
                 </li>
                 {% endfor %}
             </ul>
@@ -68,6 +75,13 @@
                     <h3><a href="{{ article.url }}" target="_blank"><i class="fas fa-link"></i> {{ article.title }}</a></h3>
                     <p>{{ article.description }}</p>
                     <a href="{{ article.url }}" target="_blank" class="read-more"><i class="fas fa-book-open"></i> Read more</a>
+                    <!-- Sentiment Analysis -->
+                    {% if sentiment_data %}
+                    <div class="sentiment">
+                        <p><strong>Sentiment: </strong> {{ sentiment_data[loop.index0].sentiment }}</p>
+                        <p><strong>Score: </strong> {{ sentiment_data[loop.index0].score }}</p>
+                    </div>
+                    {% endif %}
                 </li>
                 {% endfor %}
             </ul>

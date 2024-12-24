@@ -45,15 +45,36 @@ def get_news(topic=None, category=None):
     articles = response.json().get('articles', [])
     return articles
 
+# Data cleaning function
+def clean_articles(articles):
+    cleaned_articles = []
+    
+    for article in articles:
+        # Skip articles with removed content or None values
+        if not article.get('title') or '[Removed]' in str(article.get('title')) or not article.get('description') or '[Removed]' in str(article.get('description')):
+            continue  # Skip this article if title or description contains [Removed]
+        
+        # Further cleaning to remove any unwanted or irrelevant content like '[Removed]' in the URL, etc.
+        if article.get('url') and '[Removed]' in article.get('url'):
+            continue  # Skip if URL contains '[Removed]'
+
+        # Append cleaned article
+        cleaned_articles.append(article)
+
+    return cleaned_articles
+
 @app.get("/")
 async def home(request: Request, topic: str = Query(None), category: str = Query(None)):
     # Fetch news articles based on the topic or category, or general news if none are provided
     articles = get_news(topic, category)
-
-    # Return the rendered HTML template
+    
+    # Clean the articles
+    cleaned_articles = clean_articles(articles)
+    
+    # Return the rendered HTML template with cleaned articles
     return templates.TemplateResponse("article.html", {
         "request": request,
-        "articles": articles,
+        "articles": cleaned_articles,
         "topic": topic,
         "category": category
     })
