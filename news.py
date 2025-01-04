@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, Query
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import requests
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 # Initialize the FastAPI app
 app = FastAPI()
@@ -15,6 +16,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # News API Base URL and Key (replace with your API key)
 BASE_URL = "https://newsapi.org/v2/"
 NEWS_API_KEY = "2fc2a2999ef544eba64f07e060f086b4"  # Replace with your NewsAPI key
+
+# Initialize Sentiment Analyzer
+analyzer = SentimentIntensityAnalyzer()
 
 # Function to fetch articles from the News API
 def get_news(topic=None, category=None):
@@ -63,6 +67,19 @@ def clean_articles(articles):
 
     return cleaned_articles
 
+# Function to add sentiment analysis to the articles
+def add_sentiment_analysis(articles):
+    for article in articles:
+        # Analyze sentiment for title and description
+        title_sentiment = analyzer.polarity_scores(article.get('title', ''))
+        description_sentiment = analyzer.polarity_scores(article.get('description', ''))
+
+        # Add sentiment to article
+        article['title_sentiment'] = title_sentiment
+        article['description_sentiment'] = description_sentiment
+
+    return articles
+
 @app.get("/")
 async def home(request: Request, topic: str = Query(None), category: str = Query(None)):
     # Fetch news articles based on the topic or category, or general news if none are provided
@@ -70,11 +87,14 @@ async def home(request: Request, topic: str = Query(None), category: str = Query
     
     # Clean the articles
     cleaned_articles = clean_articles(articles)
+
+    # Add sentiment analysis to the cleaned articles
+    articles_with_sentiment = add_sentiment_analysis(cleaned_articles)
     
-    # Return the rendered HTML template with cleaned articles
+    # Return the rendered HTML template with cleaned articles and sentiment data
     return templates.TemplateResponse("article.html", {
         "request": request,
-        "articles": cleaned_articles,
+        "articles": articles_with_sentiment,
         "topic": topic,
         "category": category
     })

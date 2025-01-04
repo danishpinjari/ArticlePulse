@@ -26,13 +26,13 @@
                         <label for="category"><i class="fas fa-filter"></i> Category:</label>
                         <select name="category" id="category" onchange="this.form.submit()">
                             <option value="" disabled selected>Select Category</option>
-                            <option value="general">General</option>
-                            <option value="business">Business</option>
-                            <option value="technology">Technology</option>
-                            <option value="sports">Sports</option>
-                            <option value="health">Health</option>
-                            <option value="entertainment">Entertainment</option>
-                            <option value="science">Science</option>
+                            <option value="general" {% if category == 'general' %}selected{% endif %}>General</option>
+                            <option value="business" {% if category == 'business' %}selected{% endif %}>Business</option>
+                            <option value="technology" {% if category == 'technology' %}selected{% endif %}>Technology</option>
+                            <option value="sports" {% if category == 'sports' %}selected{% endif %}>Sports</option>
+                            <option value="health" {% if category == 'health' %}selected{% endif %}>Health</option>
+                            <option value="entertainment" {% if category == 'entertainment' %}selected{% endif %}>Entertainment</option>
+                            <option value="science" {% if category == 'science' %}selected{% endif %}>Science</option>
                         </select>
                     </form>
                 </li>
@@ -55,12 +55,30 @@
                     <p>{{ article.description }}</p>
                     <a href="{{ article.url }}" target="_blank" class="read-more"><i class="fas fa-book-open"></i> Read more</a>
                     <!-- Sentiment Analysis -->
-                    {% if sentiment_data %}
                     <div class="sentiment">
-                        <p><strong>Sentiment: </strong> {{ sentiment_data[loop.index0].sentiment }}</p>
-                        <p><strong>Score: </strong> {{ sentiment_data[loop.index0].score }}</p>
+                        <p><strong>Sentiment: </strong> 
+                            {% if article.title_sentiment['compound'] >= 0.05 %}
+                                Positive
+                            {% elif article.title_sentiment['compound'] <= -0.05 %}
+                                Negative
+                            {% else %}
+                                Neutral
+                            {% endif %}
+                        </p>
+                        <p><strong>Score: </strong> {{ article.title_sentiment['compound'] }}</p>
                     </div>
-                    {% endif %}
+                    <div class="sentiment">
+                        <p><strong>Sentiment (Description): </strong> 
+                            {% if article.description_sentiment['compound'] >= 0.05 %}
+                                Positive
+                            {% elif article.description_sentiment['compound'] <= -0.05 %}
+                                Negative
+                            {% else %}
+                                Neutral
+                            {% endif %}
+                        </p>
+                        <p><strong>Score: </strong> {{ article.description_sentiment['compound'] }}</p>
+                    </div>
                 </li>
                 {% endfor %}
             </ul>
@@ -76,12 +94,30 @@
                     <p>{{ article.description }}</p>
                     <a href="{{ article.url }}" target="_blank" class="read-more"><i class="fas fa-book-open"></i> Read more</a>
                     <!-- Sentiment Analysis -->
-                    {% if sentiment_data %}
                     <div class="sentiment">
-                        <p><strong>Sentiment: </strong> {{ sentiment_data[loop.index0].sentiment }}</p>
-                        <p><strong>Score: </strong> {{ sentiment_data[loop.index0].score }}</p>
+                        <p><strong>Sentiment: </strong> 
+                            {% if article.title_sentiment['compound'] >= 0.05 %}
+                                Positive
+                            {% elif article.title_sentiment['compound'] <= -0.05 %}
+                                Negative
+                            {% else %}
+                                Neutral
+                            {% endif %}
+                        </p>
+                        <p><strong>Score: </strong> {{ article.title_sentiment['compound'] }}</p>
                     </div>
-                    {% endif %}
+                    <div class="sentiment">
+                        <p><strong>Sentiment (Description): </strong> 
+                            {% if article.description_sentiment['compound'] >= 0.05 %}
+                                Positive
+                            {% elif article.description_sentiment['compound'] <= -0.05 %}
+                                Negative
+                            {% else %}
+                                Neutral
+                            {% endif %}
+                        </p>
+                        <p><strong>Score: </strong> {{ article.description_sentiment['compound'] }}</p>
+                    </div>
                 </li>
                 {% endfor %}
             </ul>
