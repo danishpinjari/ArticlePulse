@@ -1,104 +1,97 @@
 from fastapi import FastAPI, Request, Query
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-import requests
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from typing import List, Dict, Optional
+from dotenv import load_dotenv
+import logging
+import os
+import requests
 
-# Initialize the FastAPI app
-app = FastAPI()
+# ----------------- Load Environment Variables ----------------- #
+load_dotenv()
 
-# Setup Jinja2 templates
-templates = Jinja2Templates(directory="templates")
+# ----------------- Configuration ----------------- #
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Serve static files (CSS, images)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# News API Base URL and Key (replace with your API key)
 BASE_URL = "https://newsapi.org/v2/"
-NEWS_API_KEY = "2fc2a2999ef544eba64f07e060f086b4"  # Replace with your NewsAPI key
+NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 
-# Initialize Sentiment Analyzer
+# ----------------- FastAPI App Setup ----------------- #
+app = FastAPI()
+templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 analyzer = SentimentIntensityAnalyzer()
 
-# Function to fetch articles from the News API
-def get_news(topic=None, category=None):
-    if topic:
-        # Fetch news articles based on the topic
-        response = requests.get(f"{BASE_URL}everything", params={
-            'q': topic,
-            'apiKey': NEWS_API_KEY,
-            'language': 'en',
-            'sortBy': 'relevancy'
-        })
-    elif category:
-        # Fetch top headlines based on the selected category
-        response = requests.get(f"{BASE_URL}top-headlines", params={
-            'apiKey': NEWS_API_KEY,
-            'country': 'us',  # You can change the country if needed
-            'category': category,
-            'language': 'en'
-        })
-    else:
-        # Fetch general top headlines if no topic or category is provided
-        response = requests.get(f"{BASE_URL}top-headlines", params={
-            'apiKey': NEWS_API_KEY,
-            'country': 'us',  # You can change the country if needed
-            'category': 'general'
-        })
+# ----------------- News Fetching Function ----------------- #
+def get_news(topic: Optional[str] = None , category: Optional[str] = None) -> List[Dict]:
+    params = {
+        'apiKey': NEWS_API_KEY,
+        'language': 'en',
+    }
 
-    articles = response.json().get('articles', [])
-    return articles
+    try:
+        if topic:
+            endpoint = "everything"
+            params.update({'q': topic, 'sortBy': 'relevancy'})
+        else:
+            endpoint = "top-headlines"
+            params.update({
+                'country': 'us',
+                'category': category if category else 'general'
+            })
 
-# Data cleaning function
-def clean_articles(articles):
+        response = requests.get(f"{BASE_URL}{endpoint}", params=params, timeout=10)
+        response.raise_for_status()
+        return response.json().get('articles', [])
+    except requests.exceptions.RequestException as e:
+        logger.error(f"News API request failed: {str(e)}")
+        return []
+    except Exception as e:
+        logger.error(f"Unexpected error fetching news: {str(e)}")
+        return []
+
+def clean_articles(articles: List[Dict]) -> List[Dict]:
     cleaned_articles = []
-    
     for article in articles:
-        # Skip articles with removed content or None values
-        if not article.get('title') or '[Removed]' in str(article.get('title')) or not article.get('description') or '[Removed]' in str(article.get('description')):
-            continue  # Skip this article if title or description contains [Removed]
-        
-        # Further cleaning to remove any unwanted or irrelevant content like '[Removed]' in the URL, etc.
-        if article.get('url') and '[Removed]' in article.get('url'):
-            continue  # Skip if URL contains '[Removed]'
+        try:
+            if not article.get('title') or '[Removed]' in article.get('title', ''):
+                continue
+            if not article.get('description') or '[Removed]' in article.get('description', ''):
+                continue
 
-        # Append cleaned article
-        cleaned_articles.append(article)
+            # Set default values
+            article.setdefault('urlToImage', '')
+            article.setdefault('publishedAt', '')
+            article.setdefault('author', 'Unknown')
+
+            # Sentiment analysis
+            article['title_sentiment'] = analyzer.polarity_scores(article['title'])
+            article['description_sentiment'] = analyzer.polarity_scores(article['description'])
+
+            cleaned_articles.append(article)
+        except Exception as e:
+            logger.error(f"Error cleaning article: {str(e)}")
+            continue
 
     return cleaned_articles
 
-# Function to add sentiment analysis to the articles
-def add_sentiment_analysis(articles):
-    for article in articles:
-        # Analyze sentiment for title and description
-        title_sentiment = analyzer.polarity_scores(article.get('title', ''))
-        description_sentiment = analyzer.polarity_scores(article.get('description', ''))
 
-        # Add sentiment to article
-        article['title_sentiment'] = title_sentiment
-        article['description_sentiment'] = description_sentiment
-
-    return articles
-
+# ----------------- Home Endpoint ----------------- #
 @app.get("/")
-async def home(request: Request, topic: str = Query(None), category: str = Query(None)):
-    # Fetch news articles based on the topic or category, or general news if none are provided
+async def home(request: Request, topic: Optional[str] = Query(None), category: Optional[str] = Query(None)):
     articles = get_news(topic, category)
-    
-    # Clean the articles
     cleaned_articles = clean_articles(articles)
 
-    # Add sentiment analysis to the cleaned articles
-    articles_with_sentiment = add_sentiment_analysis(cleaned_articles)
-    
-    # Return the rendered HTML template with cleaned articles and sentiment data
     return templates.TemplateResponse("article.html", {
         "request": request,
-        "articles": articles_with_sentiment,
+        "articles": cleaned_articles,
         "topic": topic,
-        "category": category
+        "category": category,
     })
 
+# ----------------- Server Entry Point ----------------- #
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

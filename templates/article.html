@@ -5,34 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArticlePulse</title>
     <link rel="stylesheet" href="/static/article.css">
-    <!-- Link to Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <!-- Navbar with Search Form and Category Selector -->
+
+    <!-- Navbar -->
     <nav>
         <div class="navbar">
             <a href="/" class="navbar-logo"><i class="fas fa-newspaper"></i> ArticlePulse</a>
             <ul class="navbar-links">
                 <li>
                     <form action="/" method="get" class="search-form">
-                        <input type="text" name="topic" placeholder="Search topics..." value="{{ topic or '' }}" required>
+                        <input type="text" name="topic" placeholder="Search topics..." value="{{ topic | default('') }}" required>
                         <button type="submit"><i class="fas fa-search"></i> Search</button>
                     </form>
                 </li>
                 <li>
-                    <!-- Category Dropdown -->
                     <form action="/" method="get" class="category-form">
                         <label for="category"><i class="fas fa-filter"></i> Category:</label>
                         <select name="category" id="category" onchange="this.form.submit()">
-                            <option value="" disabled selected>Select Category</option>
-                            <option value="general" {% if category == 'general' %}selected{% endif %}>General</option>
-                            <option value="business" {% if category == 'business' %}selected{% endif %}>Business</option>
-                            <option value="technology" {% if category == 'technology' %}selected{% endif %}>Technology</option>
-                            <option value="sports" {% if category == 'sports' %}selected{% endif %}>Sports</option>
-                            <option value="health" {% if category == 'health' %}selected{% endif %}>Health</option>
-                            <option value="entertainment" {% if category == 'entertainment' %}selected{% endif %}>Entertainment</option>
-                            <option value="science" {% if category == 'science' %}selected{% endif %}>Science</option>
+                            <option value="" disabled {% if not category %}selected{% endif %}>Select Category</option>
+                            {% for cat in ['general', 'business', 'technology', 'sports', 'health', 'entertainment', 'science'] %}
+                                <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat|capitalize }}</option>
+                            {% endfor %}
                         </select>
                     </form>
                 </li>
@@ -43,86 +38,92 @@
     <!-- Main Content -->
     <div class="container">
         <h1><i class="fas fa-bolt"></i> <span id="typing-text" class="typing-effect"></span></h1>
-        
-        {% if not topic %}
-        <!-- Display Random Articles when no topic is entered -->
+
         <div class="news-section">
-            <h2><i class="fas fa-globe"></i> News Articles</h2>
-            <ul class="articles-list">
-                {% for article in articles[:5] %}
-                <li class="article-item">
-                    <h3><a href="{{ article.url }}" target="_blank"><i class="fas fa-link"></i> {{ article.title }}</a></h3>
-                    <p>{{ article.description }}</p>
-                    <a href="{{ article.url }}" target="_blank" class="read-more"><i class="fas fa-book-open"></i> Read more</a>
-                    <!-- Sentiment Analysis -->
-                    <div class="sentiment">
-                        <p><strong>Sentiment: </strong> 
-                            {% if article.title_sentiment['compound'] >= 0.05 %}
-                                Positive
-                            {% elif article.title_sentiment['compound'] <= -0.05 %}
-                                Negative
-                            {% else %}
-                                Neutral
-                            {% endif %}
-                        </p>
-                        <p><strong>Score: </strong> {{ article.title_sentiment['compound'] }}</p>
-                    </div>
-                    <div class="sentiment">
-                        <p><strong>Sentiment (Description): </strong> 
-                            {% if article.description_sentiment['compound'] >= 0.05 %}
-                                Positive
-                            {% elif article.description_sentiment['compound'] <= -0.05 %}
-                                Negative
-                            {% else %}
-                                Neutral
-                            {% endif %}
-                        </p>
-                        <p><strong>Score: </strong> {{ article.description_sentiment['compound'] }}</p>
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
+            {% if topic %}
+                <h2><i class="fas fa-search"></i> News Articles on "{{ topic }}"</h2>
+            {% elif category %}
+                <h2><i class="fas fa-filter"></i> {{ category|capitalize }} News</h2>
+            {% else %}
+                <h2><i class="fas fa-globe"></i> Top News Articles</h2>
+            {% endif %}
+
+            {% if not articles %}
+                <div class="no-articles">
+                    <p><i class="fas fa-exclamation-circle"></i> No articles found. Try a different search or category.</p>
+                </div>
+            {% else %}
+                <ul class="articles-list">
+                    {% for article in articles %}
+                    <li class="article-item">
+                        <div class="article-header">
+                            <h3>
+                                <a href="{{ article.url }}" target="_blank">
+                                    <i class="fas fa-link"></i> {{ article.title }}
+                                </a>
+                            </h3>
+                            <div class="article-meta">
+                                {% if article.author %}
+                                    <span><i class="fas fa-user"></i> {{ article.author }}</span>
+                                {% endif %}
+                                {% if article.publishedAt %}
+                                    <span><i class="fas fa-calendar-alt"></i> {{ article.publishedAt }}</span>
+                                {% endif %}
+                                {% if article.source and article.source.name %}
+                                    <span><i class="fas fa-newspaper"></i> {{ article.source.name }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if article.urlToImage %}
+                            <div class="article-image">
+                                <img src="{{ article.urlToImage }}" alt="{{ article.title }}">
+                            </div>
+                        {% endif %}
+
+                        {% if article.description %}
+                            <p class="article-description"><strong>Description:</strong> {{ article.description }}</p>
+                        {% endif %}
+                        
+                        <div class="article-actions">
+                            <a href="{{ article.url }}" target="_blank" class="read-more">
+                                <i class="fas fa-book-open"></i> Read more
+                            </a>
+                        </div>
+
+                        <!-- Sentiment Analysis Section -->
+                        <div class="sentiment-analysis">
+                            <div class="sentiment">
+                                <h4><i class="fas fa-chart-line"></i> Sentiment Analysis</h4>
+                                <p><strong>Title Sentiment:</strong>
+                                    {% set title_score = article.title_sentiment.compound %}
+                                    {% if title_score >= 0.05 %}
+                                        <span class="sentiment-positive">Positive</span>
+                                    {% elif title_score <= -0.05 %}
+                                        <span class="sentiment-negative">Negative</span>
+                                    {% else %}
+                                        <span class="sentiment-neutral">Neutral</span>
+                                    {% endif %}
+                                    <span class="score">[Score: {{ "%.2f"|format(title_score) }}]</span>
+                                </p>
+                                <p><strong>Description Sentiment:</strong>
+                                    {% set desc_score = article.description_sentiment.compound %}
+                                    {% if desc_score >= 0.05 %}
+                                        <span class="sentiment-positive">Positive</span>
+                                    {% elif desc_score <= -0.05 %}
+                                        <span class="sentiment-negative">Negative</span>
+                                    {% else %}
+                                        <span class="sentiment-neutral">Neutral</span>
+                                    {% endif %}
+                                    <span class="score">[Score: {{ "%.2f"|format(desc_score) }}]</span>
+                                </p>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
         </div>
-        {% else %}
-        <!-- Display Articles for the entered topic -->
-        <div class="news-section">
-            <h2><i class="fas fa-search"></i> News Articles on "{{ topic }}"</h2>
-            <ul class="articles-list">
-                {% for article in articles %}
-                <li class="article-item">
-                    <h3><a href="{{ article.url }}" target="_blank"><i class="fas fa-link"></i> {{ article.title }}</a></h3>
-                    <p>{{ article.description }}</p>
-                    <a href="{{ article.url }}" target="_blank" class="read-more"><i class="fas fa-book-open"></i> Read more</a>
-                    <!-- Sentiment Analysis -->
-                    <div class="sentiment">
-                        <p><strong>Sentiment: </strong> 
-                            {% if article.title_sentiment['compound'] >= 0.05 %}
-                                Positive
-                            {% elif article.title_sentiment['compound'] <= -0.05 %}
-                                Negative
-                            {% else %}
-                                Neutral
-                            {% endif %}
-                        </p>
-                        <p><strong>Score: </strong> {{ article.title_sentiment['compound'] }}</p>
-                    </div>
-                    <div class="sentiment">
-                        <p><strong>Sentiment (Description): </strong> 
-                            {% if article.description_sentiment['compound'] >= 0.05 %}
-                                Positive
-                            {% elif article.description_sentiment['compound'] <= -0.05 %}
-                                Negative
-                            {% else %}
-                                Neutral
-                            {% endif %}
-                        </p>
-                        <p><strong>Score: </strong> {{ article.description_sentiment['compound'] }}</p>
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
     </div>
 
     <script src="/static/article.js"></script>
@@ -130,6 +131,7 @@
     <!-- Footer -->
     <footer>
         <p>&copy; 2024 ArticlePulse. All rights reserved. <i class="fas fa-heart"></i></p>
+        <p class="api-credit">Powered by NewsAPI and OpenAI</p>
     </footer>
 </body>
 </html>

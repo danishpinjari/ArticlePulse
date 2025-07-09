@@ -1,6 +1,6 @@
-fastapi==0.95.2  # Web framework for building APIs
-uvicorn==0.22.0  # ASGI server for running the app during development
-gunicorn==21.2.0 # WSGI HTTP server for running FastAPI in production
-jinja2==3.1.2    # Templating engine for rendering HTML
-requests==2.31.0 # HTTP library for making API calls
-vaderSentiment==3.3.2  # Sentiment analysis library used in the code
+fastapi # Web framework for building APIs
+uvicorn  # ASGI server for running the app during development
+gunicorn # WSGI HTTP server for running FastAPI in production
+jinja2   # Templating engine for rendering HTML
+requests # HTTP library for making API calls
+vaderSentiment  # Sentiment analysis library used in the code
