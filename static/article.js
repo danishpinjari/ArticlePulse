@@ -1,34 +1,42 @@
-// JavaScript to retain the selected category after submission
-document.addEventListener("DOMContentLoaded", () => {
-    // Get the URL parameters
-    const params = new URLSearchParams(window.location.search);
-    const selectedCategory = params.get("category");
+// Typing effect for headline
+document.addEventListener("DOMContentLoaded", function () {
+    const typingText = document.getElementById("typing-text");
 
-    // If a category is selected, set it as the selected option in the dropdown
-    if (selectedCategory) {
-        const categoryDropdown = document.getElementById("category");
-        categoryDropdown.value = selectedCategory;
+    // Phrases to cycle through
+    const phrases = [
+        "Stay Informed. Stay Ahead.",
+        "AI-Powered News Summaries",
+        "Real-Time Sentiment Analysis",
+        "Explore the World with ArticlePulse"
+    ];
+
+    let currentPhraseIndex = 0;
+    let currentCharIndex = 0;
+    let isDeleting = false;
+    const typingSpeed = 100;
+    const pauseTime = 1500;
+
+    function type() {
+        const currentPhrase = phrases[currentPhraseIndex];
+        if (isDeleting) {
+            currentCharIndex--;
+        } else {
+            currentCharIndex++;
+        }
+
+        typingText.textContent = currentPhrase.substring(0, currentCharIndex);
+
+        if (!isDeleting && currentCharIndex === currentPhrase.length) {
+            isDeleting = true;
+            setTimeout(type, pauseTime);
+        } else if (isDeleting && currentCharIndex === 0) {
+            isDeleting = false;
+            currentPhraseIndex = (currentPhraseIndex + 1) % phrases.length;
+            setTimeout(type, 300);
+        } else {
+            setTimeout(type, typingSpeed);
+        }
     }
+
+    type(); // Start typing animation
 });
-
-const text = "Welcome to ArticlePulse";
-let i = 0;
-const speed = 100; // Speed of typing effect in milliseconds
-
-function typeWriter() {
-    if (i < text.length) {
-        document.getElementById("typing-text").textContent += text.charAt(i);
-        i++;
-        setTimeout(typeWriter, speed);
-    } else {
-        // Pause before restarting
-        setTimeout(() => {
-            document.getElementById("typing-text").textContent = ""; // Clear the text
-            i = 0; // Reset the index
-            typeWriter(); // Restart the typing
-        }, 2000); // Adjust this delay as needed
-    }
-}
-
-// Start typing effect on page load
-window.onload = typeWriter;
